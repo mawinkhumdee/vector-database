@@ -1,0 +1,8 @@
+services:
+  mongo:
+    image: mongodb/mongodb-atlas-local
+    ports:
+      - "27017:27017"
+    environment:
+      MONGODB_INITDB_ROOT_USERNAME: vector
+      MONGODB_INITDB_ROOT_PASSWORD: secretvector

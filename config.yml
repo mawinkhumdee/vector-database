@@ -1,0 +1,6 @@
+mongo:
+  uri: mongodb://vector:secretvector@localhost:27017/?authSource=admin&directConnection=true
+  database: vectors
+  collection: documents
+  vectorIndex: vector_index
+  embeddingDimension: 1536
