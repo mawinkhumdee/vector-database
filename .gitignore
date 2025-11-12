@@ -1,0 +1,21 @@
+# Build artifacts
+bin/
+build/
+dist/
+*.out
+
+# Go test/cache files
+*.test
+coverage.out
+
+# IDE/project files
+.vscode/
+.idea/
+*.swp
+
+# OS noise
+.DS_Store
+
+# Local configuration & secrets
+config.yml
+.env

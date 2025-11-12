@@ -1,0 +1,6 @@
+mongo:
+  uri:
+  database:
+  collection:
+  vectorIndex:
+  embeddingDimension:
