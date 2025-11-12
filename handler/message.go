@@ -15,11 +15,11 @@ import (
 
 // MessageHandler wires HTTP endpoints to the embedding service.
 type MessageHandler struct {
-	service service.EmbeddingService
+	service service.SearchService
 }
 
 // NewMessageHandler creates a handler ready to register HTTP routes.
-func NewMessageHandler(svc service.EmbeddingService) *MessageHandler {
+func NewMessageHandler(svc service.SearchService) *MessageHandler {
 	return &MessageHandler{service: svc}
 }
 

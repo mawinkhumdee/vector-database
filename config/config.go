@@ -7,7 +7,11 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-type MongoConfig struct {
+type Configs struct {
+	MongoDB MongoDB `yaml:"mongo"`
+}
+
+type MongoDB struct {
 	URI                string `yaml:"uri"`
 	Database           string `yaml:"database"`
 	Collection         string `yaml:"collection"`
@@ -15,61 +19,57 @@ type MongoConfig struct {
 	EmbeddingDimension int    `yaml:"embeddingDimension"`
 }
 
-type AppConfig struct {
-	Mongo MongoConfig `yaml:"mongo"`
-}
-
 const (
 	defaultConfigPath = "config.yml"
 	defaultMongoURI   = "mongodb://vector:secretvector@localhost:27017/?authSource=admin&directConnection=true"
 )
 
-func Load() (AppConfig, error) {
+func Load() (Configs, error) {
 	path := getEnv("CONFIG_PATH", defaultConfigPath)
 
 	content, err := os.ReadFile(path)
 	if err != nil {
-		return AppConfig{}, fmt.Errorf("read config file %s: %w", path, err)
+		return Configs{}, fmt.Errorf("read config file %s: %w", path, err)
 	}
 
-	var cfg AppConfig
+	var cfg Configs
 	if err := yaml.Unmarshal(content, &cfg); err != nil {
-		return AppConfig{}, fmt.Errorf("parse config file %s: %w", path, err)
+		return Configs{}, fmt.Errorf("parse config file %s: %w", path, err)
 	}
 
 	applyDefaults(&cfg)
 
 	if err := validate(cfg); err != nil {
-		return AppConfig{}, err
+		return Configs{}, err
 	}
 
 	return cfg, nil
 }
 
-func applyDefaults(cfg *AppConfig) {
-	if cfg.Mongo.URI == "" {
-		cfg.Mongo.URI = defaultMongoURI
+func applyDefaults(cfg *Configs) {
+	if cfg.MongoDB.URI == "" {
+		cfg.MongoDB.URI = defaultMongoURI
 	}
-	if cfg.Mongo.Database == "" {
-		cfg.Mongo.Database = "vectors"
+	if cfg.MongoDB.Database == "" {
+		cfg.MongoDB.Database = "vectors"
 	}
-	if cfg.Mongo.Collection == "" {
-		cfg.Mongo.Collection = "documents"
+	if cfg.MongoDB.Collection == "" {
+		cfg.MongoDB.Collection = "documents"
 	}
-	if cfg.Mongo.VectorIndex == "" {
-		cfg.Mongo.VectorIndex = "vector_index"
+	if cfg.MongoDB.VectorIndex == "" {
+		cfg.MongoDB.VectorIndex = "vector_index"
 	}
-	if cfg.Mongo.EmbeddingDimension == 0 {
-		cfg.Mongo.EmbeddingDimension = 1536
+	if cfg.MongoDB.EmbeddingDimension == 0 {
+		cfg.MongoDB.EmbeddingDimension = 1536
 	}
 }
 
-func validate(cfg AppConfig) error {
-	if cfg.Mongo.URI == "" {
+func validate(cfg Configs) error {
+	if cfg.MongoDB.URI == "" {
 		return fmt.Errorf("mongo.uri must be provided")
 	}
-	if cfg.Mongo.EmbeddingDimension <= 0 {
-		return fmt.Errorf("mongo.embeddingDimension must be positive, got %d", cfg.Mongo.EmbeddingDimension)
+	if cfg.MongoDB.EmbeddingDimension <= 0 {
+		return fmt.Errorf("mongo.embeddingDimension must be positive, got %d", cfg.MongoDB.EmbeddingDimension)
 	}
 	return nil
 }

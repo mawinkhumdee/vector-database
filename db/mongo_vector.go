@@ -11,45 +11,9 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-type mongoVectorStore struct {
-	client     *mongo.Client
-	collection *mongo.Collection
-	cfg        config.MongoConfig
-}
-
-// NewMongoVectorStore creates a Mongo backed VectorStore implementation.
-func NewMongoVectorStore(ctx context.Context, cfg config.MongoConfig) (VectorStore, error) {
-	clientOpts := options.Client().ApplyURI(cfg.URI)
-	client, err := mongo.Connect(ctx, clientOpts)
-	if err != nil {
-		return nil, fmt.Errorf("connect mongo: %w", err)
-	}
-
-	if err := client.Ping(ctx, nil); err != nil {
-		return nil, fmt.Errorf("ping mongo: %w", err)
-	}
-
-	collection := client.Database(cfg.Database).Collection(cfg.Collection)
-
-	if err := ensureVectorIndex(ctx, collection, cfg); err != nil {
-		return nil, err
-	}
-
-	return &mongoVectorStore{
-		client:     client,
-		collection: collection,
-		cfg:        cfg,
-	}, nil
-}
-
-func (m *mongoVectorStore) Close(ctx context.Context) error {
-	return m.client.Disconnect(ctx)
-}
-
-func (m *mongoVectorStore) InsertDocument(ctx context.Context, doc model.DocumentInput, embedding []float32) (model.Document, error) {
+func (m *vectorDB) InsertDocument(ctx context.Context, doc model.DocumentInput, embedding []float32) (model.Document, error) {
 	if err := doc.Validate(); err != nil {
 		return model.Document{}, err
 	}
@@ -83,7 +47,7 @@ func (m *mongoVectorStore) InsertDocument(ctx context.Context, doc model.Documen
 	}, nil
 }
 
-func (m *mongoVectorStore) SimilaritySearch(ctx context.Context, query model.VectorQuery) ([]model.Document, error) {
+func (m *vectorDB) SimilaritySearch(ctx context.Context, query model.VectorQuery) ([]model.Document, error) {
 	if err := query.Validate(m.cfg.EmbeddingDimension); err != nil {
 		return nil, err
 	}
@@ -161,7 +125,7 @@ func float64ToFloat32(vector []float64) []float32 {
 	return result
 }
 
-func ensureVectorIndex(ctx context.Context, coll *mongo.Collection, cfg config.MongoConfig) error {
+func ensureVectorIndex(ctx context.Context, coll *mongo.Collection, cfg config.MongoDB) error {
 	exists, err := vectorIndexExists(ctx, coll, cfg.VectorIndex)
 	if err != nil {
 		return fmt.Errorf("list vector indexes: %w", err)
