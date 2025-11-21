@@ -16,6 +16,8 @@ type (
 		IndexDocument(ctx context.Context, input model.DocumentInput) (model.Document, error)
 		SearchByText(ctx context.Context, text string, limit int) ([]model.Document, error)
 		SearchByVector(ctx context.Context, query model.VectorQuery) ([]model.Document, error)
+		InsertImage(ctx context.Context, input model.ImageInput) (model.ImageDocument, error)
+		SearchImages(ctx context.Context, query model.ImageQuery) ([]model.ImageDocument, error)
 	}
 )
 

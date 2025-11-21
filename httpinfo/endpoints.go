@@ -24,4 +24,14 @@ var (
 		Path:        basePath + "/messages",
 		Description: "Retrieve messages via semantic search",
 	}
+	InsertImageEndpoint = Endpoint{
+		Method:      http.MethodPost,
+		Path:        basePath + "/images",
+		Description: "Insert an image with a textual description and store its embedding",
+	}
+	SearchImageEndpoint = Endpoint{
+		Method:      http.MethodPost,
+		Path:        basePath + "/images/search",
+		Description: "Find images whose embeddings are similar to the provided payload",
+	}
 )

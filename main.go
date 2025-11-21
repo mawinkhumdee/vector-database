@@ -41,8 +41,10 @@ func main() {
 	}
 
 	messageHandler := handler.NewMessageHandler(embeddingService)
+	imageHandler := handler.NewImageHandler(embeddingService)
 	mux := http.NewServeMux()
 	messageHandler.Register(mux)
+	imageHandler.Register(mux)
 
 	log.Printf("HTTP server listening on %s", httpinfo.DefaultAddr)
 	if err := http.ListenAndServe(httpinfo.DefaultAddr, mux); err != nil {

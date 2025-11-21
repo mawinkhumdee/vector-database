@@ -42,10 +42,12 @@ End-to-end Go service demonstrating how to build a semantic search API backed by
 
 All routes are prefixed with `/api`.
 
-| Method | Path        | Description                             |
-| ------ | ----------- | --------------------------------------- |
-| POST   | `/messages` | Insert a message + auto-generate vector |
-| GET    | `/messages` | Semantic search over stored messages    |
+| Method | Path             | Description                                   |
+| ------ | ---------------- | --------------------------------------------- |
+| POST   | `/messages`      | Insert a message + auto-generate vector       |
+| GET    | `/messages`      | Semantic search over stored messages          |
+| POST   | `/images`        | Insert an image + textual description         |
+| POST   | `/images/search` | Find images whose embeddings are the closest  |
 
 ### Insert a Message
 
@@ -87,6 +89,52 @@ Response:
       "content": "Embeddings let search understand meaning.",
       "metadata": { "topic": "demo", "language": "en" },
       "score": 0.91
+    }
+  ]
+}
+```
+
+### Insert an Image
+
+Upload JPEG or PNG files via `multipart/form-data`. Optional metadata must be a JSON string.
+
+```bash
+curl -X POST http://localhost:8080/api/images \
+  -F "description=A beach sunset with orange sky." \
+  -F 'metadata={"location":"Phuket","time":"18:30"}' \
+  -F "image=@/path/to/sunset.jpg"
+```
+
+Response:
+
+```json
+{
+  "image": {
+    "id": "67009e42b3f629343e58802a",
+    "description": "A beach sunset with orange sky.",
+    "metadata": { "location": "Phuket", "time": "18:30" }
+  }
+}
+```
+
+### Search for Similar Images
+
+```bash
+curl -X POST http://localhost:8080/api/images/search \
+  -F "image=@/path/to/sunset.jpg" \
+  -F "limit=3"
+```
+
+Response:
+
+```json
+{
+  "results": [
+    {
+      "id": "67009e42b3f629343e58802a",
+      "description": "A beach sunset with orange sky.",
+      "metadata": { "location": "Phuket", "time": "18:30" },
+      "score": 0.89
     }
   ]
 }
