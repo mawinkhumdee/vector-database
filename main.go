@@ -22,12 +22,12 @@ func main() {
 		log.Fatalf("load config: %v", err)
 	}
 
-	store, err := db.NewVectorDB(ctx, cfg.MongoDB)
+	database, err := db.New(ctx, cfg.MongoDB)
 	if err != nil {
 		log.Fatalf("init mongo vector store: %v", err)
 	}
 	defer func() {
-		_ = store.Close(context.Background())
+		_ = database.Close(context.Background())
 	}()
 
 	encoder, err := service.NewEncoder(cfg.MongoDB.EmbeddingDimension)
@@ -35,7 +35,7 @@ func main() {
 		log.Fatalf("init encoder: %v", err)
 	}
 
-	embeddingService, err := service.NewSearch(store, encoder, cfg.MongoDB.EmbeddingDimension)
+	embeddingService, err := service.NewSearch(database.Documents, encoder, cfg.MongoDB.EmbeddingDimension)
 	if err != nil {
 		log.Fatalf("init embedding service: %v", err)
 	}

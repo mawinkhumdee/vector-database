@@ -1,4 +1,4 @@
-package db
+package document
 
 import (
 	"context"
@@ -13,7 +13,26 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-func (m *vectorDB) InsertDocument(ctx context.Context, doc model.DocumentInput, embedding []float32) (model.Document, error) {
+// Store defines CRUD and search operations over the documents collection.
+type Store interface {
+	InsertDocument(ctx context.Context, doc model.DocumentInput, embedding []float32) (model.Document, error)
+	SimilaritySearch(ctx context.Context, query model.VectorQuery) ([]model.Document, error)
+}
+
+type mongoStore struct {
+	collection *mongo.Collection
+	cfg        config.MongoDB
+}
+
+// NewStore wires the Mongo collection and config into a Store implementation.
+func NewStore(collection *mongo.Collection, cfg config.MongoDB) Store {
+	return &mongoStore{
+		collection: collection,
+		cfg:        cfg,
+	}
+}
+
+func (m *mongoStore) InsertDocument(ctx context.Context, doc model.DocumentInput, embedding []float32) (model.Document, error) {
 	if err := doc.Validate(); err != nil {
 		return model.Document{}, err
 	}
@@ -47,7 +66,7 @@ func (m *vectorDB) InsertDocument(ctx context.Context, doc model.DocumentInput, 
 	}, nil
 }
 
-func (m *vectorDB) SimilaritySearch(ctx context.Context, query model.VectorQuery) ([]model.Document, error) {
+func (m *mongoStore) SimilaritySearch(ctx context.Context, query model.VectorQuery) ([]model.Document, error) {
 	if err := query.Validate(m.cfg.EmbeddingDimension); err != nil {
 		return nil, err
 	}
@@ -125,7 +144,8 @@ func float64ToFloat32(vector []float64) []float32 {
 	return result
 }
 
-func ensureVectorIndex(ctx context.Context, coll *mongo.Collection, cfg config.MongoDB) error {
+// EnsureIndexes creates the Atlas Vector Search index when it does not exist.
+func EnsureIndexes(ctx context.Context, coll *mongo.Collection, cfg config.MongoDB) error {
 	exists, err := vectorIndexExists(ctx, coll, cfg.VectorIndex)
 	if err != nil {
 		return fmt.Errorf("list vector indexes: %w", err)

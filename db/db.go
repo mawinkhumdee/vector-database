@@ -5,25 +5,18 @@ import (
 	"fmt"
 
 	"vector-database/config"
-	"vector-database/model"
+	"vector-database/db/document"
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-type VectorDB interface {
-	InsertDocument(ctx context.Context, doc model.DocumentInput, embedding []float32) (model.Document, error)
-	SimilaritySearch(ctx context.Context, query model.VectorQuery) ([]model.Document, error)
-	Close(ctx context.Context) error
+type Database struct {
+	client    *mongo.Client
+	Documents document.Store
 }
 
-type vectorDB struct {
-	client     *mongo.Client
-	collection *mongo.Collection
-	cfg        config.MongoDB
-}
-
-func NewVectorDB(ctx context.Context, cfg config.MongoDB) (VectorDB, error) {
+func New(ctx context.Context, cfg config.MongoDB) (*Database, error) {
 	clientOpts := options.Client().ApplyURI(cfg.URI)
 	client, err := mongo.Connect(ctx, clientOpts)
 	if err != nil {
@@ -34,19 +27,19 @@ func NewVectorDB(ctx context.Context, cfg config.MongoDB) (VectorDB, error) {
 		return nil, fmt.Errorf("ping mongo: %w", err)
 	}
 
-	collection := client.Database(cfg.Database).Collection(cfg.Collection)
-
-	if err := ensureVectorIndex(ctx, collection, cfg); err != nil {
+	db := client.Database(cfg.Database)
+	docCollection := db.Collection(cfg.Collection.Document)
+	if err := document.EnsureIndexes(ctx, docCollection, cfg); err != nil {
 		return nil, err
 	}
 
-	return &vectorDB{
-		client:     client,
-		collection: collection,
-		cfg:        cfg,
+	return &Database{
+		client:    client,
+		Documents: document.NewStore(docCollection, cfg),
 	}, nil
 }
 
-func (m *vectorDB) Close(ctx context.Context) error {
-	return m.client.Disconnect(ctx)
+// Close releases the Mongo client resources.
+func (d *Database) Close(ctx context.Context) error {
+	return d.client.Disconnect(ctx)
 }

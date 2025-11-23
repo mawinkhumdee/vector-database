@@ -12,11 +12,16 @@ type Configs struct {
 }
 
 type MongoDB struct {
-	URI                string `yaml:"uri"`
-	Database           string `yaml:"database"`
-	Collection         string `yaml:"collection"`
-	VectorIndex        string `yaml:"vectorIndex"`
-	EmbeddingDimension int    `yaml:"embeddingDimension"`
+	URI                string     `yaml:"uri"`
+	Database           string     `yaml:"database"`
+	Collection         Collection `yaml:"collection"`
+	VectorIndex        string     `yaml:"vectorIndex"`
+	EmbeddingDimension int        `yaml:"embeddingDimension"`
+}
+
+type Collection struct {
+	Document string `yaml:"document"`
+	analyze  string `yaml:"analyze"`
 }
 
 const (
@@ -37,31 +42,11 @@ func Load() (Configs, error) {
 		return Configs{}, fmt.Errorf("parse config file %s: %w", path, err)
 	}
 
-	applyDefaults(&cfg)
-
 	if err := validate(cfg); err != nil {
 		return Configs{}, err
 	}
 
 	return cfg, nil
-}
-
-func applyDefaults(cfg *Configs) {
-	if cfg.MongoDB.URI == "" {
-		cfg.MongoDB.URI = defaultMongoURI
-	}
-	if cfg.MongoDB.Database == "" {
-		cfg.MongoDB.Database = "vectors"
-	}
-	if cfg.MongoDB.Collection == "" {
-		cfg.MongoDB.Collection = "documents"
-	}
-	if cfg.MongoDB.VectorIndex == "" {
-		cfg.MongoDB.VectorIndex = "vector_index"
-	}
-	if cfg.MongoDB.EmbeddingDimension == 0 {
-		cfg.MongoDB.EmbeddingDimension = 1536
-	}
 }
 
 func validate(cfg Configs) error {
